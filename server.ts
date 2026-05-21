@@ -128,7 +128,7 @@ Fields required:
 
     // Default to Gemini (system or custom user key)
     const ai = getGeminiClient(apiProvider === "gemini" ? customApiKey : undefined);
-    const modelToUse = apiProvider === "gemini" && customModel ? customModel : "gemini-3.5-flash";
+    const modelToUse = apiProvider === "gemini" && customModel ? customModel : "gemini-1.5-flash";
 
     const response = await ai.models.generateContent({
       model: modelToUse,
@@ -158,9 +158,9 @@ Fields required:
     const data = JSON.parse(resultText.trim());
     return res.json(data);
   } catch (error: any) {
-    console.error("Analysis Error:", error);
+    console.error("Analysis Error Details:", error);
     return res.status(500).json({
-      error: error.message || "노답봇 분석 중 오류가 발생했습니다.",
+      error: `분석 실패: ${error.message || "알 수 없는 오류"}`,
     });
   }
 });
@@ -232,7 +232,7 @@ fields:
 
     // Default to Gemini (system or custom user key)
     const ai = getGeminiClient(apiProvider === "gemini" ? customApiKey : undefined);
-    const modelToUse = apiProvider === "gemini" && customModel ? customModel : "gemini-3.5-flash";
+    const modelToUse = apiProvider === "gemini" && customModel ? customModel : "gemini-1.5-flash";
 
     // Map conversation array to the expected SDK structure and ensure it alternate and starts with user.
     // The Gemini SDK uses the format: contents: [{role: 'user' | 'model', parts: [{text: '...'}]}]
@@ -302,22 +302,9 @@ fields:
     const data = JSON.parse(resultText.trim());
     return res.json(data);
   } catch (error: any) {
-    console.error("Chat Error:", error);
-    let errorMessage = error.message || "노답봇 대화 중 에러가 났습니다. (진짜 노답 통신 장애 발생!)";
-    
-    if (typeof errorMessage === "string" && errorMessage.trim().startsWith("{")) {
-      try {
-        const parsed = JSON.parse(errorMessage);
-        if (parsed?.error?.message) {
-          errorMessage = parsed.error.message;
-        }
-      } catch (e) {
-        // use original error
-      }
-    }
-
+    console.error("Chat Error Details:", error);
     return res.status(500).json({
-      error: errorMessage,
+      error: `대화 실패: ${error.message || "알 수 없는 오류"}`,
     });
   }
 });
