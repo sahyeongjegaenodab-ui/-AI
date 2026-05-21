@@ -859,7 +859,7 @@ export default function App() {
                         initial={{ opacity: 0, y: 10, scale: 0.98 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.95 }}
-                        className={`flex gap-3 max-w-[85%] ${isUser ? "self-end flex-row-reverse ml-auto" : "self-startMR bg-slate"}`}
+                        className={`flex gap-3 max-w-[85%] ${isUser ? "self-end flex-row-reverse ml-auto" : "self-start mr-auto"}`}
                       >
                         {/* Avatar tag indicator */}
                         <div className={`w-8 h-8 rounded-full shrink-0 flex items-center justify-center text-sm font-bold shadow-sm ${

@@ -162,12 +162,41 @@ fields:
 - reply: 사용자의 대화에 대한 노답봇의 위트 있는 답변 (한국어로 작성)
 - emotion: 위의 감정 문자열들 중 하나 ('clueless' | 'smug' | 'sigh' | 'angry' | 'joy' | 'shock')`;
 
-    // Map conversation array to the expected SDK structure.
+    // Map conversation array to the expected SDK structure and ensure it alternate and starts with user.
     // The Gemini SDK uses the format: contents: [{role: 'user' | 'model', parts: [{text: '...'}]}]
-    const apiContents = messages.map((m: any) => ({
-      role: m.role === "assistant" ? "model" : "user",
-      parts: [{ text: m.content }],
+    const rawContents = messages.map((m: any) => ({
+      role: (m.role === "assistant" ? "model" : "user") as "user" | "model",
+      parts: [{ text: m.content || "" }],
     }));
+
+    const apiContents: { role: "user" | "model"; parts: { text: string }[] }[] = [];
+    
+    for (const msg of rawContents) {
+      if (apiContents.length === 0) {
+        // Must start with user role
+        if (msg.role === "user") {
+          apiContents.push(msg);
+        }
+      } else {
+        const lastMsg = apiContents[apiContents.length - 1];
+        if (lastMsg.role === msg.role) {
+          // Merge sequential contents with the same role to maintain strict alternation
+          lastMsg.parts[0].text += "\n" + msg.parts[0].text;
+        } else {
+          apiContents.push(msg);
+        }
+      }
+    }
+
+    // Fallback: If we couldn't form a valid chat array starting with a user message,
+    // construct one from the last message's content (or a generic fallback) so the API doesn't crash.
+    if (apiContents.length === 0) {
+      const lastUserContent = messages.filter((m: any) => m.role === "user").pop()?.content || "안녕";
+      apiContents.push({
+        role: "user",
+        parts: [{ text: lastUserContent }],
+      });
+    }
 
     const response = await ai.models.generateContent({
       model: "gemini-3.5-flash",
