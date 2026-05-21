@@ -927,26 +927,32 @@ export default function App() {
                       </motion.div>
                     );
                   })}
-                </AnimatePresence>
 
-                {/* BOT LOADER */}
-                {chatLoading && (
-                  <div className="flex gap-3 max-w-[80%] self-start animate-pulse">
-                    <div className="w-8 h-8 rounded-full bg-slate-800 shrink-0 flex items-center justify-center text-sm">
-                      🤖
-                    </div>
-                    <div className="bg-[#1E293B] p-4 rounded-2xl rounded-tl-none border border-slate-800 space-y-1.5">
-                      <div className="flex items-center gap-1">
-                        <span className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce"></span>
-                        <span className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce [animation-delay:0.2s]"></span>
-                        <span className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce [animation-delay:0.4s]"></span>
+                  {/* BOT LOADER */}
+                  {chatLoading && (
+                    <motion.div
+                      key="bot-loader"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="flex gap-3 max-w-[80%] self-start animate-pulse"
+                    >
+                      <div className="w-8 h-8 rounded-full bg-slate-800 shrink-0 flex items-center justify-center text-sm">
+                        🤖
                       </div>
-                      <p className="text-[10px] text-slate-500 tracking-wider font-mono uppercase">
-                        노답 리액터 칩셋 충전율 100% 돌파 중...
-                      </p>
-                    </div>
-                  </div>
-                )}
+                      <div className="bg-[#1E293B] p-4 rounded-2xl rounded-tl-none border border-slate-800 space-y-1.5">
+                        <div className="flex items-center gap-1">
+                          <span className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce"></span>
+                          <span className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce [animation-delay:0.2s]"></span>
+                          <span className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce [animation-delay:0.4s]"></span>
+                        </div>
+                        <p className="text-[10px] text-slate-500 tracking-wider font-mono uppercase">
+                          노답 리액터 칩셋 충전율 100% 돌파 중...
+                        </p>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
 
                 <div ref={chatBottomRef} />
               </div>
