@@ -334,6 +334,8 @@ async function startServer() {
 
   app.listen(PORT, "0.0.0.0", () => {
     console.log(`[노답봇 서버] Server running at http://0.0.0.0:${PORT}`);
+    console.log("[환경설정] GEMINI_API_KEY:", process.env.GEMINI_API_KEY ? "설정됨" : "미설정");
+    console.log("[환경설정] DEEPSEEK_API_KEY:", process.env.DEEPSEEK_API_KEY ? "설정됨" : "미설정");
   });
 }
 
