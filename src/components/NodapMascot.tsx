@@ -48,7 +48,7 @@ interface NodapMascotProps {
 }
 
 export default function NodapMascot({ emotion = "sigh", isThinking = false }: NodapMascotProps) {
-  const current = faceMap[emotion];
+  const current = faceMap[emotion] || faceMap["sigh"];
 
   return (
     <div className="flex flex-col items-center justify-center p-4">

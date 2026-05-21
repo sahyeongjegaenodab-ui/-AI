@@ -185,11 +185,28 @@ export default function App() {
       });
 
       if (!res.ok) {
-        const errData = await res.json();
-        throw new Error(errData.error || "분석 도중 뇌정지가 왔습니다.");
+        let errMsg = "분석 도중 뇌정지가 왔습니다.";
+        try {
+          const contentType = res.headers.get("content-type");
+          if (contentType && contentType.includes("application/json")) {
+            const errData = await res.json();
+            errMsg = errData.error || errMsg;
+          } else {
+            const errText = await res.text();
+            errMsg = errText ? (errText.substring(0, 200) + (errText.length > 200 ? "..." : "")) : errMsg;
+          }
+        } catch (e) {
+          // ignore
+        }
+        throw new Error(errMsg);
       }
 
-      const result: AnalysisResult = await res.json();
+      let result: AnalysisResult;
+      try {
+        result = await res.json();
+      } catch (e) {
+        throw new Error("서버 응답을 분석결과 데이터(JSON)로 해석하지 못했습니다.");
+      }
       setAnalysisResult(result);
 
       // Add to history list
@@ -263,11 +280,28 @@ export default function App() {
       });
 
       if (!res.ok) {
-        const errData = await res.json();
-        throw new Error(errData.error || "대화 중 칩셋 오류가 발생했습니다.");
+        let errMsg = "대화 중 칩셋 오류가 발생했습니다.";
+        try {
+          const contentType = res.headers.get("content-type");
+          if (contentType && contentType.includes("application/json")) {
+            const errData = await res.json();
+            errMsg = errData.error || errMsg;
+          } else {
+            const errText = await res.text();
+            errMsg = errText ? (errText.substring(0, 200) + (errText.length > 200 ? "..." : "")) : errMsg;
+          }
+        } catch (e) {
+          // ignore
+        }
+        throw new Error(errMsg);
       }
 
-      const rawJson = await res.json();
+      let rawJson;
+      try {
+        rawJson = await res.json();
+      } catch (e) {
+        throw new Error("서버 응답을 대화 데이터(JSON)로 해석하지 못했습니다.");
+      }
       
       // Response format: { reply: string, emotion: EmotionType }
       const botMsg: Message = {
