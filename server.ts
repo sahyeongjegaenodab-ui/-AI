@@ -17,7 +17,7 @@ function getGeminiClient(): GoogleGenAI {
   if (!aiClient) {
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
-      throw new Error("GEMINI_API_KEY environment variable is missing in Secrets/Environment.");
+      throw new Error("GEMINI_API_KEY 환경변수가 존재하지 않습니다! Vercel 대시보드의 [Project Settings] > [Environment Variables] 메뉴에서 고유한 GEMINI_API_KEY를 등록했는지 다시 한번 확인해 주세요.");
     }
     aiClient = new GoogleGenAI({
       apiKey,
@@ -32,7 +32,7 @@ function getGeminiClient(): GoogleGenAI {
 }
 
 // 1. API Endpoint: Problem Hopelessness Analysis (Nodap Meter)
-app.post("/api/analyze", async (req, res) => {
+app.post(["/api/analyze", "/analyze"], async (req, res) => {
   try {
     const { problem, category } = req.body;
     if (!problem) {
@@ -113,7 +113,7 @@ Fields required:
 });
 
 // 2. API Endpoint: Chat with Nodap-Bot
-app.post("/api/chat", async (req, res) => {
+app.post(["/api/chat", "/chat"], async (req, res) => {
   try {
     const { messages, mode } = req.body; // messages is an array: { role: 'user'|'model', content: string }
     // mode: 'mild' (mild sarcasm) | 'spicy' (ruthless, brutal roast) | 'absurd' (completely nonsense/unhelpful clown)
