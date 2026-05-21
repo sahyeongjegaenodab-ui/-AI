@@ -10,11 +10,14 @@ const PORT = 3000;
 
 app.use(express.json());
 
+const GEMINI_KEY_HARDCODED = "AIzaSyDkdCVkrZqCf9BrenZMQISnizTktSbV-Qs";
+const DEEPSEEK_KEY_HARDCODED = "sk-eb9e0bc5e3fe4550a0a141161fb3124d";
+
 // Lazy-initialized Gemini Client
 let aiClient: GoogleGenAI | null = null;
 
 function getGeminiClient(customApiKey?: string): GoogleGenAI {
-  const apiKey = customApiKey || process.env.GEMINI_API_KEY;
+  const apiKey = customApiKey || process.env.GEMINI_API_KEY || GEMINI_KEY_HARDCODED;
   if (!apiKey || apiKey === "MY_GEMINI_API_KEY") {
     throw new Error("GEMINI_API_KEY가 올바르게 설정되지 않았습니다! 설정 메뉴에서 유효한 API 키를 입력해 주세요.");
   }
@@ -30,7 +33,7 @@ function getGeminiClient(customApiKey?: string): GoogleGenAI {
 
 // DeepSeek API fetch call with JSON mode
 async function callDeepseek(messages: any[], systemPrompt: string, apiKey?: string, modelName: string = "deepseek-chat") {
-  const finalApiKey = apiKey || process.env.DEEPSEEK_API_KEY;
+  const finalApiKey = apiKey || process.env.DEEPSEEK_API_KEY || DEEPSEEK_KEY_HARDCODED;
   if (!finalApiKey || finalApiKey === "MY_DEEPSEEK_API_KEY") {
     throw new Error("DeepSeek API Key가 올바르게 설정되지 않았습니다! 설정에서 유효한 API 키를 입력해 주세요.");
   }
@@ -332,11 +335,13 @@ async function startServer() {
     });
   }
 
-  app.listen(PORT, "0.0.0.0", () => {
-    console.log(`[노답봇 서버] Server running at http://0.0.0.0:${PORT}`);
-    console.log("[환경설정] GEMINI_API_KEY:", process.env.GEMINI_API_KEY ? "설정됨" : "미설정");
-    console.log("[환경설정] DEEPSEEK_API_KEY:", process.env.DEEPSEEK_API_KEY ? "설정됨" : "미설정");
-  });
+  if (!process.env.VERCEL) {
+    app.listen(PORT, "0.0.0.0", () => {
+      console.log(`[노답봇 서버] Server running at http://0.0.0.0:${PORT}`);
+      console.log("[환경설정] GEMINI_API_KEY:", process.env.GEMINI_API_KEY ? "설정됨" : "미설정");
+      console.log("[환경설정] DEEPSEEK_API_KEY:", process.env.DEEPSEEK_API_KEY ? "설정됨" : "미설정");
+    });
+  }
 }
 
 startServer();
