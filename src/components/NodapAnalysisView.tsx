@@ -22,6 +22,7 @@ export default function NodapAnalysisView({
   onShareToGlobalChat,
 }: NodapAnalysisViewProps) {
   const [animatedScore, setAnimatedScore] = useState(0);
+  const [docNumber] = useState(() => Math.floor(100000 + Math.random() * 900000));
 
   // Find category emoji & label
   const catInfo = CATEGORIES.find((c) => c.value === category) || {
@@ -101,7 +102,7 @@ export default function NodapAnalysisView({
         className="text-center bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm relative overflow-hidden"
       >
         <div className="absolute top-2 right-2 px-3 py-1 bg-white dark:bg-slate-950 rounded-full border border-slate-200 dark:border-slate-800 font-mono text-xs text-slate-400">
-          DOC No. {Math.floor(100000 + Math.random() * 900000)}
+          DOC No. {docNumber}
         </div>
 
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-bold mb-3">

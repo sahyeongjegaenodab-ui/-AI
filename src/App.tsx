@@ -600,7 +600,7 @@ export default function App() {
         </header>
 
         {/* SCROLLABLE DESIRED SECTION CONTENT */}
-        <section className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 relative flex flex-col items-center z-10 custom-scrollbar">
+        <section key={activeTab} className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 relative flex flex-col items-center z-10 custom-scrollbar">
           
           {/* Main Error Alert */}
           {errorMsg && (
@@ -802,7 +802,8 @@ export default function App() {
               {/* MASCOT CHAT MONITORING */}
               <div className="bg-[#1E293B] border border-slate-800 rounded-3xl p-4 shrink-0 flex items-center justify-between shadow-md relative overflow-hidden">
                 <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-full bg-slate-800 flex-shrink-0 flex items-center justify-center text-3xl shadow-md">
+                  {/* Mascots and dynamic statuses are protected -> add notranslate and translate="no" to the emoticon container */}
+                  <div className="w-14 h-14 rounded-full bg-slate-800 flex-shrink-0 flex items-center justify-center text-3xl shadow-md notranslate" translate="no">
                     {currentEmotion === "sigh" && "┐( ´д｀)┌"}
                     {currentEmotion === "smug" && "😏"}
                     {currentEmotion === "angry" && "╬▔皿▔)"}

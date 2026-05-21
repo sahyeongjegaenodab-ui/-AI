@@ -90,7 +90,8 @@ export default function NodapMascot({ emotion = "sigh", isThinking = false }: No
           key={emotion}
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          className={`absolute -bottom-2 -right-3 px-3 py-1.5 rounded-full border shadow-md bg-white dark:bg-slate-900 ${current.color} font-mono font-bold text-sm tracking-wider`}
+          className={`absolute -bottom-2 -right-3 px-3 py-1.5 rounded-full border shadow-md bg-white dark:bg-slate-900 ${current.color} font-mono font-bold text-sm tracking-wider notranslate`}
+          translate="no"
         >
           {isThinking ? "💬 분석중..." : current.face}
         </motion.div>
