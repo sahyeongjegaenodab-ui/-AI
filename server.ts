@@ -15,8 +15,8 @@ let aiClient: GoogleGenAI | null = null;
 
 function getGeminiClient(customApiKey?: string): GoogleGenAI {
   const apiKey = customApiKey || process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    throw new Error("GEMINI_API_KEY 환경변수가 존재하지 않습니다! 설정 메뉴를 클릭해 본인의 API 키를 입력해 주세요.");
+  if (!apiKey || apiKey === "MY_GEMINI_API_KEY") {
+    throw new Error("GEMINI_API_KEY가 올바르게 설정되지 않았습니다! 설정 메뉴에서 유효한 API 키를 입력해 주세요.");
   }
   return new GoogleGenAI({
     apiKey,
@@ -31,8 +31,8 @@ function getGeminiClient(customApiKey?: string): GoogleGenAI {
 // DeepSeek API fetch call with JSON mode
 async function callDeepseek(messages: any[], systemPrompt: string, apiKey?: string, modelName: string = "deepseek-chat") {
   const finalApiKey = apiKey || process.env.DEEPSEEK_API_KEY;
-  if (!finalApiKey) {
-    throw new Error("DeepSeek API Key가 존재하지 않습니다! 설정에서 API Key를 입력해 주세요.");
+  if (!finalApiKey || finalApiKey === "MY_DEEPSEEK_API_KEY") {
+    throw new Error("DeepSeek API Key가 올바르게 설정되지 않았습니다! 설정에서 유효한 API 키를 입력해 주세요.");
   }
 
   const apiMessages = [
