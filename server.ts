@@ -12,14 +12,11 @@ const PORT = 3000;
 
 app.use(express.json());
 
-const GEMINI_KEY_HARDCODED = "AIzaSyDkdCVkrZqCf9BrenZMQISnizTktSbV-Qs";
-const DEEPSEEK_KEY_HARDCODED = "sk-eb9e0bc5e3fe4550a0a141161fb3124d";
-
 // Lazy-initialized Gemini Client
 let aiClient: GoogleGenAI | null = null;
 
 function getGeminiClient(customApiKey?: string): GoogleGenAI {
-  const apiKey = customApiKey || process.env.GEMINI_API_KEY || GEMINI_KEY_HARDCODED;
+  const apiKey = customApiKey || process.env.GEMINI_API_KEY;
   if (!apiKey || apiKey === "MY_GEMINI_API_KEY") {
     throw new Error("GEMINI_API_KEY가 올바르게 설정되지 않았습니다! 설정 메뉴에서 유효한 API 키를 입력해 주세요.");
   }
@@ -35,7 +32,7 @@ function getGeminiClient(customApiKey?: string): GoogleGenAI {
 
 // DeepSeek API fetch call with JSON mode
 async function callDeepseek(messages: any[], systemPrompt: string, apiKey?: string, modelName: string = "deepseek-chat") {
-  const finalApiKey = apiKey || process.env.DEEPSEEK_API_KEY || DEEPSEEK_KEY_HARDCODED;
+  const finalApiKey = apiKey || process.env.DEEPSEEK_API_KEY;
   if (!finalApiKey || finalApiKey === "MY_DEEPSEEK_API_KEY") {
     throw new Error("DeepSeek API Key가 올바르게 설정되지 않았습니다! 설정에서 유효한 API 키를 입력해 주세요.");
   }
@@ -133,7 +130,7 @@ Fields required:
 
     // Default to Gemini (system or custom user key)
     const ai = getGeminiClient(apiProvider === "gemini" ? customApiKey : undefined);
-    const modelToUse = apiProvider === "gemini" && customModel ? customModel : "gemini-1.5-flash";
+    const modelToUse = apiProvider === "gemini" && customModel ? customModel : "gemini-3.5-flash";
 
     const response = await ai.models.generateContent({
       model: modelToUse,
@@ -237,7 +234,7 @@ fields:
 
     // Default to Gemini (system or custom user key)
     const ai = getGeminiClient(apiProvider === "gemini" ? customApiKey : undefined);
-    const modelToUse = apiProvider === "gemini" && customModel ? customModel : "gemini-1.5-flash";
+    const modelToUse = apiProvider === "gemini" && customModel ? customModel : "gemini-3.5-flash";
 
     // Map conversation array to the expected SDK structure and ensure it alternate and starts with user.
     // The Gemini SDK uses the format: contents: [{role: 'user' | 'model', parts: [{text: '...'}]}]
