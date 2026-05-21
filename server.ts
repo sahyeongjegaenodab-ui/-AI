@@ -13,33 +13,78 @@ app.use(express.json());
 // Lazy-initialized Gemini Client
 let aiClient: GoogleGenAI | null = null;
 
-function getGeminiClient(): GoogleGenAI {
-  if (!aiClient) {
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      throw new Error("GEMINI_API_KEY 환경변수가 존재하지 않습니다! Vercel 대시보드의 [Project Settings] > [Environment Variables] 메뉴에서 고유한 GEMINI_API_KEY를 등록했는지 다시 한번 확인해 주세요.");
-    }
-    aiClient = new GoogleGenAI({
-      apiKey,
-      httpOptions: {
-        headers: {
-          "User-Agent": "aistudio-build",
-        },
-      },
-    });
+function getGeminiClient(customApiKey?: string): GoogleGenAI {
+  const apiKey = customApiKey || process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    throw new Error("GEMINI_API_KEY 환경변수가 존재하지 않습니다! 설정 메뉴를 클릭해 본인의 API 키를 입력해 주세요.");
   }
-  return aiClient;
+  return new GoogleGenAI({
+    apiKey,
+    httpOptions: {
+      headers: {
+        "User-Agent": "aistudio-build",
+      },
+    },
+  });
+}
+
+// DeepSeek API fetch call with JSON mode
+async function callDeepseek(messages: any[], systemPrompt: string, apiKey?: string, modelName: string = "deepseek-chat") {
+  const finalApiKey = apiKey || process.env.DEEPSEEK_API_KEY;
+  if (!finalApiKey) {
+    throw new Error("DeepSeek API Key가 존재하지 않습니다! 설정에서 API Key를 입력해 주세요.");
+  }
+
+  const apiMessages = [
+    { role: "system", content: systemPrompt },
+    ...messages.map((m: any) => ({
+      role: m.role === "assistant" ? "assistant" : "user",
+      content: m.content || ""
+    }))
+  ];
+
+  const response = await fetch("https://api.deepseek.com/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${finalApiKey}`
+    },
+    body: JSON.stringify({
+      model: modelName,
+      messages: apiMessages,
+      response_format: {
+        type: "json_object"
+      }
+    })
+  });
+
+  if (!response.ok) {
+    let errText = await response.text();
+    let errDetail = errText;
+    try {
+      const parsed = JSON.parse(errText);
+      if (parsed?.error?.message) {
+        errDetail = parsed.error.message;
+      }
+    } catch (e) {}
+    throw new Error(`DeepSeek API 오류 (${response.status}): ${errDetail}`);
+  }
+
+  const data = await response.json();
+  const content = data.choices?.[0]?.message?.content;
+  if (!content) {
+    throw new Error("DeepSeek API 응답에서 메시지 본문을 찾을 수 없습니다.");
+  }
+  return content;
 }
 
 // 1. API Endpoint: Problem Hopelessness Analysis (Nodap Meter)
 app.post(["/api/analyze", "/analyze"], async (req, res) => {
   try {
-    const { problem, category } = req.body;
+    const { problem, category, apiProvider, customApiKey, deepseekApiKey, customModel } = req.body;
     if (!problem) {
       return res.status(400).json({ error: "문제를 입력해 주세요." });
     }
-
-    const ai = getGeminiClient();
 
     const systemPrompt = `You are "노답봇" (Nodap-Bot), a witty, sarcastic, and extremely humorous Korean AI that evaluates how hopeless ("노답") a user's situation is.
 Analyze the user's situation based on the category of their problem: study/career, romance, money, procrastination, or general.
@@ -62,8 +107,31 @@ Fields required:
 
 위 성격에 맞는 촌철살인의 노답 분석을 진행해 줘.`;
 
+    if (apiProvider === "deepseek") {
+      const systemInstruction = `${systemPrompt}\n\nYou MUST respond with valid JSON matching this schema:
+{
+  "score": integer (0 to 100 representing hopelessness score),
+  "grade": string (humorous class rating name),
+  "summary": string (ruthless funny summary sentence),
+  "prescription": string (absurd recipe to solve),
+  "quote": string (roasted mind-waking quote customized)
+}`;
+      const resultText = await callDeepseek(
+        [{ role: "user", content: promptText }],
+        systemInstruction,
+        deepseekApiKey,
+        customModel || "deepseek-chat"
+      );
+      const data = JSON.parse(resultText.trim());
+      return res.json(data);
+    }
+
+    // Default to Gemini (system or custom user key)
+    const ai = getGeminiClient(apiProvider === "gemini" ? customApiKey : undefined);
+    const modelToUse = apiProvider === "gemini" && customModel ? customModel : "gemini-3.5-flash";
+
     const response = await ai.models.generateContent({
-      model: "gemini-3.5-flash",
+      model: modelToUse,
       contents: promptText,
       config: {
         systemInstruction: systemPrompt,
@@ -71,26 +139,11 @@ Fields required:
         responseSchema: {
           type: Type.OBJECT,
           properties: {
-            score: {
-              type: Type.INTEGER,
-              description: "노답 지수 (0 to 100)",
-            },
-            grade: {
-              type: Type.STRING,
-              description: "재치 있고 웃긴 등급 명칭",
-            },
-            summary: {
-              type: Type.STRING,
-              description: "고민에 대한 뼈 때리는 한 줄 요약",
-            },
-            prescription: {
-              type: Type.STRING,
-              description: "고민을 '노답' 식으로 해결하는 기상천외한 처방전",
-            },
-            quote: {
-              type: Type.STRING,
-              description: "멘탈을 번쩍 뜨게 만드는 뼈 때리는 명언",
-            },
+            score: { type: Type.INTEGER, description: "노답 지수 (0 to 100)" },
+            grade: { type: Type.STRING, description: "재치 있고 웃긴 등급 명칭" },
+            summary: { type: Type.STRING, description: "고민에 대한 뼈 때리는 한 줄 요약" },
+            prescription: { type: Type.STRING, description: "고민을 '노답' 식으로 해결하는 기상천외한 처방전" },
+            quote: { type: Type.STRING, description: "멘탈을 번쩍 뜨게 만드는 뼈 때리는 명언" },
           },
           required: ["score", "grade", "summary", "prescription", "quote"],
         },
@@ -107,7 +160,7 @@ Fields required:
   } catch (error: any) {
     console.error("Analysis Error:", error);
     return res.status(500).json({
-      error: error.message || "노답봇 분석 중 오류가 발생했습니다. (근데 솔직히 너 고민도 좀 노답인 듯?)",
+      error: error.message || "노답봇 분석 중 오류가 발생했습니다.",
     });
   }
 });
@@ -115,13 +168,12 @@ Fields required:
 // 2. API Endpoint: Chat with Nodap-Bot
 app.post(["/api/chat", "/chat"], async (req, res) => {
   try {
-    const { messages, mode } = req.body; // messages is an array: { role: 'user'|'model', content: string }
+    const { messages, mode, apiProvider, customApiKey, deepseekApiKey, customModel } = req.body; 
+    // messages is an array: { role: 'user'|'model', content: string }
     // mode: 'mild' (mild sarcasm) | 'spicy' (ruthless, brutal roast) | 'absurd' (completely nonsense/unhelpful clown)
     if (!messages || !Array.isArray(messages)) {
       return res.status(400).json({ error: "대화 내용이 부족합니다." });
     }
-
-    const ai = getGeminiClient();
 
     let personalityPrompt = "";
     if (mode === "mild") {
@@ -142,7 +194,7 @@ app.post(["/api/chat", "/chat"], async (req, res) => {
     } else {
       personalityPrompt = `당신은 '기상천외 해결책 노답봇'입니다.
 완벽한 백치미와 엉뚱함을 갖춘 로봇-광대 캐릭터입니다.
-고민을 해결해 준답시고 우주로 가거나, 양말을 뒤집어쓰고 춤을 추라거나, 어이없고 허무맹랑한 해결책만 장성하게 늘어놓습니다.
+고민을 해결해 준답시고 우주로 가거나, 양말을 뒤집어쓰고 춤을 추라거나, 어이없고 허무낭만적인 해결책만 장황하게 늘어놓습니다.
 지극히 진지한 태도로 상상초월의 해결법(예: '치킨 냄새가 나면 치킨집 사장님과 가위바위보를 해서 이겨보세요')을 제안하세요.`;
     }
 
@@ -161,6 +213,26 @@ app.post(["/api/chat", "/chat"], async (req, res) => {
 fields:
 - reply: 사용자의 대화에 대한 노답봇의 위트 있는 답변 (한국어로 작성)
 - emotion: 위의 감정 문자열들 중 하나 ('clueless' | 'smug' | 'sigh' | 'angry' | 'joy' | 'shock')`;
+
+    if (apiProvider === "deepseek") {
+      const systemInstruction = `${systemPrompt}\n\n[현재 성격 모드 설정]\n${personalityPrompt}\n\nYou MUST respond in JSON format with exactly:
+{
+  "reply": "노답봇의 유쾌한 답변 텍스트",
+  "emotion": "clueless" | "smug" | "sigh" | "angry" | "joy" | "shock"
+}`;
+      const resultText = await callDeepseek(
+        messages,
+        systemInstruction,
+        deepseekApiKey,
+        customModel || "deepseek-chat"
+      );
+      const data = JSON.parse(resultText.trim());
+      return res.json(data);
+    }
+
+    // Default to Gemini (system or custom user key)
+    const ai = getGeminiClient(apiProvider === "gemini" ? customApiKey : undefined);
+    const modelToUse = apiProvider === "gemini" && customModel ? customModel : "gemini-3.5-flash";
 
     // Map conversation array to the expected SDK structure and ensure it alternate and starts with user.
     // The Gemini SDK uses the format: contents: [{role: 'user' | 'model', parts: [{text: '...'}]}]
@@ -199,7 +271,7 @@ fields:
     }
 
     const response = await ai.models.generateContent({
-      model: "gemini-3.5-flash",
+      model: modelToUse,
       contents: apiContents,
       config: {
         systemInstruction: `${systemPrompt}\n\n[현재 성격 모드 설정]\n${personalityPrompt}`,
@@ -231,8 +303,21 @@ fields:
     return res.json(data);
   } catch (error: any) {
     console.error("Chat Error:", error);
+    let errorMessage = error.message || "노답봇 대화 중 에러가 났습니다. (진짜 노답 통신 장애 발생!)";
+    
+    if (typeof errorMessage === "string" && errorMessage.trim().startsWith("{")) {
+      try {
+        const parsed = JSON.parse(errorMessage);
+        if (parsed?.error?.message) {
+          errorMessage = parsed.error.message;
+        }
+      } catch (e) {
+        // use original error
+      }
+    }
+
     return res.status(500).json({
-      error: error.message || "노답봇 대화 중 에러가 났습니다. (진짜 노답 통신 장애 발생!)",
+      error: errorMessage,
     });
   }
 });

@@ -327,9 +327,27 @@ export default function App() {
       }
 
     } catch (err: any) {
-      setErrorMsg(err.message || "로봇 통신 장치 오작동!");
+      let rawMsg = err.message || "로봇 통신 장치 오작동!";
+      let displayError = rawMsg;
+      if (rawMsg.includes("Quota exceeded") || rawMsg.includes("RESOURCE_EXHAUSTED") || rawMsg.includes("quota") || rawMsg.includes("429")) {
+        displayError = "⚠️ [할당량 매진] 노답봇의 무료 일일 한도가 완료되어 파업에 돌입했습니다! ㅠㅠ 잠시 후 다시 시도해 주거나, 나중에 다시 말을 걸어주세요.";
+      } else {
+        displayError = `⚠️ [통신 오류] ${rawMsg}`;
+      }
+
+      setErrorMsg(displayError);
       setCurrentEmotion("clueless");
       setSystemStatus("통신 장애 발생!");
+
+      // Append systemic warning into messages list to make it fully visible instantly
+      const botMsg: Message = {
+        id: `bot-err-${Date.now()}`,
+        role: "assistant",
+        content: displayError,
+        emotion: "clueless",
+        timestamp: new Date().toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" }),
+      };
+      setChatMessages((prev) => [...prev, botMsg]);
     } finally {
       setChatLoading(false);
     }
@@ -747,6 +765,19 @@ export default function App() {
                         ))}
                       </div>
                     </div>
+
+                    {errorMsg && (
+                      <div className="p-3 bg-rose-950/40 border border-rose-900/60 text-xs text-rose-200 rounded-xl flex items-center justify-between">
+                        <span className="leading-relaxed">{errorMsg}</span>
+                        <button
+                          type="button"
+                          onClick={() => setErrorMsg(null)}
+                          className="text-[10px] font-bold text-rose-400 hover:underline shrink-0 ml-2"
+                        >
+                          지우기
+                        </button>
+                      </div>
+                    )}
 
                     {/* Trigger Button */}
                     <div className="pt-4">
