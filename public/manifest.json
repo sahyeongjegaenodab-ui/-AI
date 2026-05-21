@@ -1,0 +1,31 @@
+{
+  "name": "노답봇 NodapBot",
+  "short_name": "노답봇",
+  "description": "답을 찾을 수 없는 세상에서 가장 유쾌하고 뻔뻔한 인공지능 '노답봇'입니다! 엉뚱한 해결책, 풍자 섞인 팩트폭격, 노답지수 측정 기능까지 모바일 앱으로 쾌적하게 만나보세요.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#020617",
+  "theme_color": "#4f46e5",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon_192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon_512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

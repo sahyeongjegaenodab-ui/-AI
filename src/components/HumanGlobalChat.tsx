@@ -50,9 +50,17 @@ export default function HumanGlobalChat({ currentUser, onLogout }: HumanGlobalCh
   const messagesContainerRef = useRef<HTMLDivElement>(null);
 
   // Web Notification States
-  const [notificationPermission, setNotificationPermission] = useState<string>(
-    typeof window !== "undefined" && "Notification" in window ? Notification.permission : "denied"
-  );
+  const [notificationPermission, setNotificationPermission] = useState<string>(() => {
+    if (typeof window !== "undefined" && "Notification" in window) {
+      try {
+        return Notification.permission;
+      } catch (err) {
+        console.warn("Notification permission access blocked by security sandbox:", err);
+        return "denied";
+      }
+    }
+    return "denied";
+  });
 
   // References to handle initial snapshots and avoid notification floods on load
   const isInitialRef = useRef(true);
@@ -65,12 +73,17 @@ export default function HumanGlobalChat({ currentUser, onLogout }: HumanGlobalCh
         const result = await Notification.requestPermission();
         setNotificationPermission(result);
         if (result === "granted") {
-          new Notification("🔔 실시간 노답 알림 연동 완료!", {
-            body: "이제 광장에 새로운 뇌절이나 사이다 타격이 들어오면 실시간으로 알림을 드릴게요!",
-          });
+          try {
+            new Notification("🔔 실시간 노답 알림 연동 완료!", {
+              body: "이제 광장에 새로운 뇌절이나 사이다 타격이 들어오면 실시간으로 알림을 드릴게요!",
+            });
+          } catch (e) {
+            console.warn("Could not fire confirmation Notification:", e);
+          }
         }
       } catch (err) {
         console.error("Failed to request notification permission:", err);
+        alert("브라우저 보안 제약이나 iframe 설정으로 인해 알림 권한을 요청할 수 없습니다.");
       }
     } else {
       alert("이 브라우저는 웹 브라우저 데스크톱 알림을 지원하지 않습니다.");
@@ -79,26 +92,31 @@ export default function HumanGlobalChat({ currentUser, onLogout }: HumanGlobalCh
 
   // Helper to trigger system push notification
   const triggerPushNotification = (sender: string, content: string) => {
-    if (
-      typeof window !== "undefined" &&
-      "Notification" in window &&
-      Notification.permission === "granted"
-    ) {
+    if (typeof window !== "undefined" && "Notification" in window) {
       try {
-        // Strip out metadata formatting details
-        let cleanText = content.replace(/\[NODAP-SCORE\]/g, "").trim();
-        if (cleanText.includes("[노답지수 리포트]")) {
-          cleanText = "📊 찬란한 노답 판정 리포트를 광장에 공표했습니다!";
+        let isGranted = false;
+        try {
+          isGranted = Notification.permission === "granted";
+        } catch (e) {
+          isGranted = false;
         }
 
-        // Limit the text length in notification bubble
-        const maxLen = 80;
-        const truncatedText = cleanText.length > maxLen ? `${cleanText.substring(0, maxLen)}...` : cleanText;
+        if (isGranted) {
+          // Strip out metadata formatting details
+          let cleanText = content.replace(/\[NODAP-SCORE\]/g, "").trim();
+          if (cleanText.includes("[노답지수 리포트]")) {
+            cleanText = "📊 찬란한 노답 판정 리포트를 광장에 공표했습니다!";
+          }
 
-        new Notification(`📢 [노답광장] ${sender}`, {
-          body: truncatedText,
-          tag: "nodap-chat-notification",
-        });
+          // Limit the text length in notification bubble
+          const maxLen = 80;
+          const truncatedText = cleanText.length > maxLen ? `${cleanText.substring(0, maxLen)}...` : cleanText;
+
+          new Notification(`📢 [노답광장] ${sender}`, {
+            body: truncatedText,
+            tag: "nodap-chat-notification",
+          });
+        }
       } catch (error) {
         console.error("Error showing push notification:", error);
       }

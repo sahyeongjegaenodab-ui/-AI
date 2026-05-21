@@ -396,7 +396,7 @@ export default function App() {
       ]);
       setAnalysisResult(null);
       setProblemInput("");
-      setCurrentEmotion("sight");
+      setCurrentEmotion("sigh");
       setSystemStatus("메모리 완전 세척 완료");
     }
   };
