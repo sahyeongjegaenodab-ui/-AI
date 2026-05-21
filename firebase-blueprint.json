@@ -1,0 +1,60 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "Contains a user's chosen nickname.",
+      "type": "object",
+      "properties": {
+        "nickname": {
+          "type": "string",
+          "description": "User's customized display nickname"
+        },
+        "password": {
+          "type": "string",
+          "description": "User password credential"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp of profile creation"
+        }
+      },
+      "required": ["nickname", "password", "createdAt"]
+    },
+    "ChatMessage": {
+      "title": "Chat Message",
+      "description": "A real-time global chat message shared among users.",
+      "type": "object",
+      "properties": {
+        "senderUid": {
+          "type": "string",
+          "description": "The writer user's Firebase Auth UID"
+        },
+        "senderNickname": {
+          "type": "string",
+          "description": "The writer user's nickname"
+        },
+        "content": {
+          "type": "string",
+          "description": "Content of the message"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server time of posting"
+        }
+      },
+      "required": ["senderUid", "senderNickname", "content", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "Store nickname registries indexed by their unique UID"
+    },
+    "/global_chats/{messageId}": {
+      "schema": "ChatMessage",
+      "description": "Global chat rooms message entries"
+    }
+  }
+}

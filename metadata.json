@@ -1,0 +1,6 @@
+{
+  "name": "노답봇",
+  "description": "답을 찾을 수 없는 세상에서 가장 유쾌하고 뻔뻔한 인공지능 '노답봇'입니다! 엉뚱한 해결책, 유쾌한 팩트폭격, 그리고 기상천외한 멘탈 개조까지 유쾌하게 즐겨보세요.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
